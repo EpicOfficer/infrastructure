@@ -7,7 +7,7 @@ services:
     networks:
       - proxy
     ports:
-      - 2375:2375
+      - 2376:2376
     command:
       - "--entrypoints.docker-proxy.address=:2375"
       - "--providers.docker=true"
