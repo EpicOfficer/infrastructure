@@ -1,0 +1,31 @@
+---
+
+services:
+  proxy:
+    image: tecnativa/docker-socket-proxy
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:roz
+    networks:
+      - proxy
+    environment:
+      CONTAINERS: 1
+      IMAGES: 1
+      NETWORKS: 1
+      SERVICES: 1
+      TASKS: 1
+      VOLUMES: 1
+    labels:
+      - "traefik.enable=true"
+      # HTTPS configuration
+      - "traefik.http.routers.dockerproxy-https.rule=Host(`${PROXY_HOST}`)"
+      - "traefik.http.routers.dockerproxy-https.entrypoints=docker-proxy"
+      - "traefik.http.routers.dockerproxy-https.tls=true"
+      - "traefik.http.routers.dockerproxy-https.tls.certresolver=tailresolver"
+      - "traefik.http.routers.dockerproxy-https.service=dockerproxy-service"
+      # Forward to the Docker Socket Proxy on port 2375
+      - "traefik.http.services.dockerproxy-service.loadbalancer.server.port=2375"
+
+networks:
+  proxy:
+    external: true
