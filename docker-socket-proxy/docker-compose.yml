@@ -23,8 +23,12 @@ services:
       - "traefik.http.routers.dockerproxy-https.tls=true"
       - "traefik.http.routers.dockerproxy-https.tls.certresolver=tailresolver"
       - "traefik.http.routers.dockerproxy-https.service=dockerproxy-service"
-      # Forward to the Docker Socket Proxy on port 2375
       - "traefik.http.services.dockerproxy-service.loadbalancer.server.port=2375"
+      # HTTP to HTTPS redirection
+      - "traefik.http.routers.dockerproxy-http.rule=Host(`${PROXY_HOST}`)"
+      - "traefik.http.routers.dockerproxy-http.entrypoints=http"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.dockerproxy-http.middlewares=redirect-to-https"
 
 networks:
   proxy:
