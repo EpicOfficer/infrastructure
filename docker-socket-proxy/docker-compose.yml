@@ -4,6 +4,8 @@ services:
   proxy:
     image: tecnativa/docker-socket-proxy
     restart: unless-stopped
+    ports:
+      - 2375:2375
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:z
     networks:
@@ -25,10 +27,6 @@ services:
       - "traefik.http.routers.dockerproxy-https.tls=true"
       - "traefik.http.routers.dockerproxy-https.tls.certresolver=tailresolver"
       - "traefik.http.routers.dockerproxy-https.service=dockerproxy-service"
-      # HTTP configuration
-      - "traefik.http.routers.dockerproxy-http.rule=Host(`${PROXY_HOST}`)"
-      - "traefik.http.routers.dockerproxy-http.entrypoints=docker-proxy"
-      - "traefik.http.routers.dockerproxy-http.service=dockerproxy-service"
 
 networks:
   proxy:
