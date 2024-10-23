@@ -10,12 +10,12 @@ services:
       - 80:80
       - 443:443
       - 8080:8080
-      - 2375:2375
+      - 2376:2376
     command:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.wings.address=:8080"
-      - "--entrypoints.docker-proxy.address=:2375"
+      - "--entrypoints.docker-proxy.address=:2376"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
