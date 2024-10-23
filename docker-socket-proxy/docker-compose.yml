@@ -17,6 +17,7 @@ services:
       VOLUMES: 1
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
       # HTTPS configuration
       - "traefik.http.routers.dockerproxy-https.rule=Host(`${PROXY_HOST}`)"
       - "traefik.http.routers.dockerproxy-https.entrypoints=docker-proxy"
