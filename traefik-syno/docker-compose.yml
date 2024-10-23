@@ -14,7 +14,7 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--certificatesresolvers.tailresolver.tailscale=true"
     volumes:
-      - /var/run/tailscale/tailscaled.sock:/var/run/tailscale/tailscaled.sock:z
+      - /var/packages/Tailscale/var/tailscaled.sock:/var/run/tailscale/tailscaled.sock:z
       - /var/run/docker.sock:/var/run/docker.sock:roz
       - letsencrypt:/letsencrypt:Z
     labels:
