@@ -18,18 +18,17 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
+      - "traefik.http.services.dockerproxy-service.loadbalancer.server.port=2375"
       # HTTPS configuration
       - "traefik.http.routers.dockerproxy-https.rule=Host(`${PROXY_HOST}`)"
-      - "traefik.http.routers.dockerproxy-https.entrypoints=docker-proxy"
+      - "traefik.http.routers.dockerproxy-https.entrypoints=docker-proxy-tls"
       - "traefik.http.routers.dockerproxy-https.tls=true"
       - "traefik.http.routers.dockerproxy-https.tls.certresolver=tailresolver"
       - "traefik.http.routers.dockerproxy-https.service=dockerproxy-service"
-      - "traefik.http.services.dockerproxy-service.loadbalancer.server.port=2375"
-      # HTTP to HTTPS redirection
+      # HTTP configuration
       - "traefik.http.routers.dockerproxy-http.rule=Host(`${PROXY_HOST}`)"
-      - "traefik.http.routers.dockerproxy-http.entrypoints=http"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.dockerproxy-http.middlewares=redirect-to-https"
+      - "traefik.http.routers.dockerproxy-http.entrypoints=docker-proxy"
+      - "traefik.http.routers.dockerproxy-http.service=dockerproxy-service"
 
 networks:
   proxy:
