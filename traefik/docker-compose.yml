@@ -33,20 +33,9 @@ services:
       - /var/run/tailscale/tailscaled.sock:/var/run/tailscale/tailscaled.sock:z
       - /var/run/docker.sock:/var/run/docker.sock:roz
       - letsencrypt:/letsencrypt:Z
+      - config:/dynamic-config:roZ
     labels:
       - "traefik.docker.network=proxy"
-      # Combined middleware for Kasm compatibility
-      - "traefik.http.middlewares.kasm-compat.chain.middlewares=add-trailing-slash,custom-headers"
-
-      # Define custom headers for kasm-compat
-      - "traefik.http.middlewares.custom-headers.headers.customresponseheaders.Cross-Origin-Embedder-Policy=require-corp"
-      - "traefik.http.middlewares.custom-headers.headers.customresponseheaders.Cross-Origin-Opener-Policy=same-origin"
-      - "traefik.http.middlewares.custom-headers.headers.customresponseheaders.Cross-Origin-Resource-Policy=same-site"
-
-      # Define add-trailing-slash for kasm-compat
-      - "traefik.http.middlewares.add-trailing-slash.redirectregex.regex=^(.+[^/])$$"
-      - "traefik.http.middlewares.add-trailing-slash.redirectregex.replacement=$${1}/"
-      - "traefik.http.middlewares.add-trailing-slash.redirectregex.permanent=false"
 
   whoami:
     image: traefik/whoami
@@ -55,7 +44,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.${SERVER_NAME}.rule=Host(`${SERVER_ADDRESS}`)"
+      - "traefik.http.routers.${SERVER_NAME}.rule=Host(`${SERVER_ADDRESS}`) && Path(`/`)"
       - "traefik.http.routers.${SERVER_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${SERVER_NAME}.tls.certresolver=${SERVER_RESOLVER}"
 
@@ -64,4 +53,6 @@ networks:
     external: true
 
 volumes:
+  config:
   letsencrypt:
+
