@@ -1,11 +1,13 @@
 http:
   middlewares:
-    kasm-compat:
+    kasm-custom-headers:
       headers:
         customResponseHeaders:
           Cross-Origin-Embedder-Policy: "require-corp"
           Cross-Origin-Opener-Policy: "same-origin"
           Cross-Origin-Resource-Policy: "same-site"
+
+    kasm-trailing-slash:
       redirectRegex:
         regex: "^(.+[^/])$"
         replacement: "$${1}/"
