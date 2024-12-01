@@ -1,0 +1,98 @@
+services:
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    container_name: audiobookshelf
+    volumes:
+      - audiobook-config:/config
+      - audiobook-meta:/metadata
+      - type: bind
+        source: "/var/mnt/data/media/Audio Books"
+        target: /audiobooks
+        bind:
+          propagation: rshared
+          selinux: z
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    networks:
+      - cloudflare_default
+    restart: unless-stopped
+
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:latest
+    container_name: calibre-web
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - web-config:/config
+      - type: bind
+        source: /var/mnt/data/media/Books
+        target: /books
+        bind:
+          propagation: rshared
+          selinux: z
+    networks:
+      - cloudflare_default
+    restart: unless-stopped
+
+  calibre:
+    image: lscr.io/linuxserver/calibre:latest
+    container_name: calibre
+    restart: unless-stopped
+    security_opt:
+      - seccomp:unconfined # optional
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - SUBFOLDER=/calibre/
+      - TITLE=Calibre
+      - NO_DECOR=true
+      - FM_HOME=/data/media/Books
+    volumes:
+      - config:/config
+      - type: bind
+        source: /var/mnt/data/media/Books
+        target: /data/media/Books
+        bind:
+          propagation: rshared
+          selinux: z
+    networks:
+      - proxy
+    labels:
+      # Enable Traefik and set network
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.services.calibre-service.loadbalancer.server.port=8080"
+      - "traefik.http.services.calibre-web-service.loadbalancer.server.port=8081"
+
+      # HTTPS router configuration
+      - "traefik.http.routers.calibre-https.rule=Host(`${PROXY_HOST}`) && PathPrefix(`/calibre/`)"
+      - "traefik.http.routers.calibre-https.service=calibre-service"
+      - "traefik.http.routers.calibre-https.entrypoints=websecure"
+      - "traefik.http.routers.calibre-https.tls=true"
+      - "traefik.http.routers.calibre-https.tls.certresolver=tailresolver"
+
+      # Web HTTPS router configuration
+      - "traefik.http.routers.calibre-web-https.rule=Host(`${PROXY_HOST}`) && PathPrefix(`/calibre-web`)"
+      - "traefik.http.routers.calibre-web-https.service=calibre-web-service"
+      - "traefik.http.routers.calibre-web-https.entrypoints=websecure"
+      - "traefik.http.routers.calibre-web-https.tls=true"
+      - "traefik.http.routers.calibre-web-https.tls.certresolver=tailresolver"
+      - "traefik.http.middlewares.calibre-web-stripprefix.stripprefix.prefixes=/calibre-web"
+      - "traefik.http.routers.calibre-web-https.middlewares=calibre-web-stripprefix@docker"
+
+volumes:
+  config:
+  audiobook-config:
+  audiobook-meta:
+  web-config:
+
+networks:
+  cloudflare_default:
+    external: true
+  proxy:
+    external: true

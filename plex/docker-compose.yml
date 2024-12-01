@@ -1,0 +1,90 @@
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VERSION=docker
+    networks:
+      macvlan_network:
+        ipv4_address: ${IP}
+      cloudflare_default:
+        aliases:
+          - plex
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 8.8.8.8
+      - 8.8.4.4
+    volumes:
+      - metadata:/config:Z
+      - type: bind
+        source: /var/mnt/data/media
+        target: /data/media
+        bind:
+          propagation: rshared
+          selinux: z
+    restart: unless-stopped
+
+  kometa:
+    image: lscr.io/linuxserver/kometa:latest
+    container_name: kometa
+    network_mode: bridge
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 8.8.8.8
+      - 8.8.4.4
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - KOMETA_CONFIG=/config/config.yml #optional
+      - KOMETA_TIME=09:15,21:15 #optional
+    volumes:
+      - kometa:/config:z
+    restart: unless-stopped
+
+  posterizarr:
+    container_name: posterizarr
+    network_mode: bridge
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK=022
+      - TERM=xterm
+      - RUN_TIME=08:45,20:45
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 8.8.8.8
+      - 8.8.4.4
+    image: ghcr.io/fscorrupt/docker-posterizarr:latest
+    restart: unless-stopped
+    volumes:
+      - posterizarr:/config:Z
+      - kometa:/kometa:z
+
+  wizarr:
+    container_name: wizarr
+    image: ghcr.io/wizarrrr/wizarr
+    restart: unless-stopped
+    networks:
+      - cloudflare_default
+    volumes:
+      - wizarr_database:/data/database:Z
+
+volumes:
+  wizarr_database:
+  kometa:
+  posterizarr:
+  metadata:
+
+networks:
+  macvlan_network:
+    external: true
+  cloudflare_default:
+    external: true
