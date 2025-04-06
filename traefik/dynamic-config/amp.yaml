@@ -1,0 +1,16 @@
+http:
+  routers:
+    amp:
+      rule: "Host(`amp.3pic.app`)"
+      entryPoints:
+        - websecure
+      service: amp
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    amp:
+      loadBalancer:
+        servers:
+          - url: "http://172.19.0.1:8081"
+        passHostHeader: true
