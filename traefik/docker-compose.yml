@@ -8,11 +8,13 @@ services:
       - proxy
     ports:
       - 80:80
-      - 443:443
+      - 443:443/tcp
+      - 443:443/udp
       - 2376:2376
     command:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http3"
       - "--entrypoints.docker-proxy.address=:2376"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
