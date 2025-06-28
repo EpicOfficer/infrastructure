@@ -1,0 +1,16 @@
+http:
+  routers:
+    jellyfin:
+      rule: "Host(`play.3pic.app`)"
+      entryPoints:
+        - websecure
+      service: jellyfin
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    jellyfin:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.11"
+        passHostHeader: true
