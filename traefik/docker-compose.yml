@@ -5,7 +5,8 @@ services:
     image: traefik:v3
     restart: always
     networks:
-      - proxy
+      proxy:
+        ipv4_address: 10.254.0.10
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -62,7 +63,13 @@ services:
 
 networks:
   proxy:
-    external: true
+    name: proxy
+    external: false
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.254.0.0/24
+          gateway: 10.254.0.1
 
 volumes:
   config:
