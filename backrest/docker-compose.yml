@@ -1,0 +1,31 @@
+services:
+  backrest:
+    image: garethgeorge/backrest:latest
+    container_name: backrest
+    hostname: backrest
+    env_file:
+      - stack.env
+    volumes:
+      - backrest_data:/data
+      - backrest_config:/config
+      - backrest_cache:/cache
+      - ${SSH_DIR}:/root/.ssh:ro,z
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.backrest.rule=Host(`${BACKREST_HOST}`)
+      - traefik.http.routers.backrest.entrypoints=websecure
+      - traefik.http.routers.backrest.tls=true
+      - traefik.http.services.backrest.loadbalancer.server.port=9898
+    restart: unless-stopped
+
+volumes:
+  backrest_data:
+  backrest_config:
+  backrest_cache:
+
+networks:
+  proxy:
+    external: true
