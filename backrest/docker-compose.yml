@@ -3,8 +3,6 @@ services:
     image: garethgeorge/backrest:latest
     container_name: backrest
     hostname: backrest
-    env_file:
-      - stack.env
     volumes:
       - backrest_data:/data
       - backrest_config:/config
@@ -20,6 +18,11 @@ services:
       - traefik.http.routers.backrest.tls=true
       - traefik.http.services.backrest.loadbalancer.server.port=9898
     restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - BACKREST_DATA=${BACKREST_DATA}
+      - BACKREST_CONFIG=${BACKREST_CONFIG}
+      - XDG_CACHE_HOME=${XDG_CACHE_HOME}
 
 volumes:
   backrest_data:
