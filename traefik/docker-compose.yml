@@ -64,14 +64,15 @@ services:
 networks:
   proxy:
     name: proxy
-    external: false
     driver: bridge
     ipam:
       config:
         - subnet: 10.254.0.0/24
           gateway: 10.254.0.1
+          ip_range: 10.254.0.128/25     # Docker auto-assigns ONLY from .128-.255
+          aux_addresses:
+            traefik: 10.254.0.10        # reserve/document the static IP
 
 volumes:
   config:
   letsencrypt:
-
