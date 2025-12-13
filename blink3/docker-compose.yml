@@ -1,0 +1,96 @@
+---
+
+x-common-environment: &common-env
+  Discord__BotToken: ${DISCORD_BOT_TOKEN}
+  ConnectionStrings__DefaultConnection: Server=postgres;Port=5432;Database=${POSTGRES_USER};Userid=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SslMode=Prefer;TrustServerCertificate=true
+  Redis__ConnectionString: redis,ssl=false,name=${REDIS_NAME}
+  ASPNETCORE_ENVIRONMENT: Production
+  LOKI_URL: ${LOKI_URL}
+
+services:
+  redis:
+    image: redis:7.2-alpine
+    restart: always
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      REDIS_NAME: ${REDIS_NAME}
+
+  postgres:
+    image: postgres:16.2-alpine
+    restart: always
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  bot:
+    image: ghcr.io/epicofficer/blink3.bot:latest
+    restart: always
+    environment:
+      <<: *common-env
+      Discord__DevGuildId: ${DISCORD_DEV_GUILD}
+      RunMigrations: ${BLINK_RUN_MIGRATIONS}
+      WordsApiKey: ${WORDS_API_KEY}
+      WordLists__en__SolutionWordsFile: ${EN_SOLUTION_WORDS}
+      WordLists__en__GuessWordsFile: ${EN_GUESS_WORDS}
+      WordLists__es__SolutionWordsFile: ${ES_SOLUTION_WORDS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - words:/words/
+
+  scout:
+    restart: always
+    environment:
+      <<: *common-env
+      Discord__BotToken: ${DISCORD_BOT_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    image: ghcr.io/epicofficer/blink3.scout:latest
+
+  api:
+    image: ghcr.io/epicofficer/blink3.api:latest
+    restart: always
+    environment:
+      <<: *common-env
+      Discord__ClientId: ${DISCORD_CLIENT_ID}
+      Discord__ClientSecret: ${DISCORD_CLIENT_SECRET}
+      ApiAllowedOrigins__0: ${API_ALLOWED_ORIGIN}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.blinkapi.rule=Host(`${API_HOST}`)"
+      - "traefik.http.routers.blinkapi.entrypoints=websecure"
+      - "traefik.http.routers.blinkapi.tls.certresolver=letsencrypt"
+      - "traefik.http.services.blinkapi.loadbalancer.server.port=8080"
+      - "traefik.docker.network=proxy"
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  postgres_data:
+  words:
